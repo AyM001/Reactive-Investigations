@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,8 +66,42 @@ public class ProductService {
         return productsRepo.findAll();
     }
 
-    public Optional<ProductModel> findProductById(Long id) {
-        return productsRepo.findById(id);
+    public ProductModel findProductById(Long id) {
+        return productsRepo.findById(id).orElse(null);
+    }
+
+    public List<ProductModel> findProductByType(String type) {
+        return productsRepo.findAll().stream().filter(productModel -> PRODUCT_TYPES_LIST.contains(type))
+                .filter(productModel -> productModel.getProductType().equalsIgnoreCase(type))
+                .collect(Collectors.toList());
+    }
+
+    public List<ProductModel> findProductByFirstName(String firstName) {
+        return productsRepo.findAll().stream().filter(productModel -> productModel.getFirstName().equalsIgnoreCase(firstName)).collect(Collectors.toList());
+    }
+
+    public List<ProductModel> findProductByLastName(String lastName) {
+        return productsRepo.findAll().stream().filter(productModel -> productModel.getLastName().equalsIgnoreCase(lastName)).collect(Collectors.toList());
+    }
+
+    public List<ProductModel> findProductByPhoneNr(String phoneNr) {
+        return productsRepo.findAll().stream().filter(productModel -> productModel.getPhoneNr().equalsIgnoreCase(phoneNr)).collect(Collectors.toList());
+    }
+
+    public List<ProductModel> findProductByDuration(String startCall, String endCall) {
+
+        LocalTime start = LocalTime.parse(startCall);
+        LocalTime end = LocalTime.parse(endCall);
+        List<ProductModel> allProducts = productsRepo.findAll();
+        List<ProductModel> productsToReturn = new ArrayList<>();
+
+        for (ProductModel entry : allProducts) {
+            LocalTime entryTime = LocalTime.parse(entry.getCallDuration());
+            if (entryTime.isAfter(start) && !entryTime.isAfter(end)) {
+                productsToReturn.add(entry);
+            }
+        }
+        return productsToReturn;
     }
 
     public List<ProductModel> findProductOfTarget(Long id) {
@@ -100,6 +135,10 @@ public class ProductService {
 
     }
 
+    public void addProduct(ProductModel productModel) {
+        productsRepo.save(productModel);
+    }
+
     public void addProduct(TargetModel targetModel) {
         ProductModel productModel = new ProductModel();
         productModel.setProductType(generateRandomProductType());
@@ -131,7 +170,7 @@ public class ProductService {
         return PRODUCT_DIRECTION[random.nextInt(PRODUCT_DIRECTION.length)];
     }
 
-    public String generateRandomEmailAddress(String firstName, String lastName){
+    public String generateRandomEmailAddress(String firstName, String lastName) {
         Random random = new Random();
         String domain = DOMAINS[random.nextInt(DOMAINS.length)];
         int number = random.nextInt(10000);
@@ -142,7 +181,7 @@ public class ProductService {
         Random random = new Random();
         int minute = random.nextInt(10);
         int seconds = random.nextInt(59);
-        return minute + ":" + seconds;
+        return "0" + minute + ":" + seconds;
     }
 
 
@@ -176,9 +215,28 @@ public class ProductService {
     }
 
 
-    public void removeProduct(Long productId){
+    public void removeProduct(Long productId) {
         productsRepo.deleteById(productId);
     }
+
+    public void updateProduct(ProductModel productModel) {
+        Optional<ProductModel> optionalProductModel = productsRepo.findById(productModel.getProductId());
+        if (optionalProductModel.isPresent()) {
+            ProductModel productFound = optionalProductModel.get();
+
+            productFound.setProductType(productModel.getProductType());
+            productFound.setCallDuration(productModel.getCallDuration());
+            // rest of fields
+
+            TargetModel targetModel = targetRepo.findById(productModel.getTargetModel().getTargetId()).orElse(null);
+            productFound.setTargetModel(targetModel);
+            ParticipantModel participantModel = participantsRepo.findById(productModel.getParticipantModel().getParticipantId()).orElse(null);
+            productFound.setParticipantModel(participantModel);
+
+            productsRepo.save(productFound);
+        }
+    }
+
 
 
     public void generateRandomTraffic() {
@@ -213,29 +271,9 @@ public class ProductService {
         }
     }
 
-    private void intializeProducts() {
-        List<TargetModel> targetModelList = targetRepo.findAll();
-        generateTraffic4SpecificTarget(targetModelList.get(0).getTargetId());
-        generateTraffic4SpecificTarget(targetModelList.get(1).getTargetId());
-        generateTraffic4SpecificTarget(targetModelList.get(2).getTargetId());
-        generateTraffic4SpecificTarget(targetModelList.get(3).getTargetId());
-        generateTraffic4SpecificTarget(targetModelList.get(4).getTargetId());
-    }
-
-    public void initializeTargets(){
-        for (int i = 0; i < 5; i++){
-            TargetModel targetModel = new TargetModel();
-            targetRepo.save(targetModel);
-        }
-    }
-
     public void initializeDatabaseForFirstDemo(){
         for (int i = 0 ; i <= 10 ; i++) {
             generateRandomTraffic();
         }
-    }
-
-    private void initializeParticipants() {
-           // participantService.addParticipant();
     }
 }

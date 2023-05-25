@@ -53,4 +53,5 @@ public class ParticipantModel {
     public void setPhoneNr(String phoneNr) {
         this.phoneNr = phoneNr;
     }
+
 }

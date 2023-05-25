@@ -84,7 +84,11 @@ public class ParticipantService {
     }
 
     public ParticipantModel generateParticipant(){
-        return new ParticipantModel("Nicu","Gheara","0722112112");
+        ParticipantModel participantModel = new ParticipantModel();
+        participantModel.setPhoneNr("0721883231");
+        participantModel.setFirstName("Nicu");
+        participantModel.setLastName("Gheara");
+        return participantModel;
     }
 
     public void removeParticipant(Long participantId){
