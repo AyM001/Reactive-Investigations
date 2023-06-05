@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 public class ParticipantController {
 
     @Autowired
@@ -47,6 +48,4 @@ public class ParticipantController {
         participantService.removeParticipant(id);
     }
 
-    //TODO create endpoinds for retrieving by participants fields, firstname/lastname
-    // TODO check unused methods from service
 }

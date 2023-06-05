@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.*;
@@ -33,6 +36,44 @@ public class ProductService {
     private ParticipantService participantService;
 
     public static String RO_PREFIX = "07";
+
+
+
+    public void addReport(Long productId) {
+         PrintStream printStream;
+         PrintStream endStream = System.out;
+         ProductModel productModel = productsRepo.findById(productId).orElse(null);
+        try {
+            printStream = new PrintStream(new File("reports\\report"+productId+".txt"));
+            System.setOut(printStream);
+            if (productModel != null) {
+                String content = reportContent(productModel);
+                printStream.println(content);
+                System.setOut(endStream);
+                System.out.println("Report generated!");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private String reportContent(ProductModel productModel){
+        String title = "Report no." + productModel.getProductId();
+        String date = "Date: " + new Date(System.currentTimeMillis());
+        String fullName = "Full name: " + productModel.getFirstName() + " " + productModel.getLastName();
+        String productType = "Intercept type " + productModel.getProductType();
+        String phoneNr = "Telephone: " + productModel.getPhoneNr();
+        String duration = "Intercept duration: " + productModel.getCallDuration();
+        String email = "E-mail: " + productModel.getEmailAddress();
+        String location = "Location: " + "\n" + "Lat/Long: " + productModel.getCoordinates();
+        String direction = "Direction of intercept: " + productModel.getDirection();
+        String header = "MINISTRY OF JUSTICE " + "\n" + date ;
+        String content = title + "\n" + "\n" + "\n" + fullName + "\n" + "\n" + productType + "\n" + phoneNr + "\n" + duration
+                + "\n" + email + "\n" + location + "\n" + direction;
+        String footer = "Present report represents classified information and property of Romanian Government";
+        return header + "\n"+ "\n"+ "\n" + content + "\n"+ "\n" + footer;
+    }
 
     public Flux<ProductModel> getProductsReactive() throws InterruptedException {
         System.out.println("Start retrieving product list reactive:");
@@ -200,7 +241,8 @@ public class ProductService {
         double latitude = random.nextDouble() * (48.2658 - 43.6186) + 43.6186; // random double between 43.6186 and 48.2658 (Romania's northernmost point)
         double longitude = random.nextDouble() * (29.6912 - 20.2611) + 20.2611; // random double between 20.2611 and 29.6912 (Romania's westernmost point)
         double[] coordinates = new double[]{latitude, longitude};
-        return Arrays.toString(coordinates);
+        String myCoordinates = Arrays.toString(coordinates);
+        return myCoordinates.substring(1, myCoordinates.length() - 1);
     }
 
 
@@ -238,30 +280,31 @@ public class ProductService {
     }
 
 
-
-    public void generateRandomTraffic() {
-            ProductModel productModel = new ProductModel();
-            productModel.setProductType(generateRandomProductType());
-            productModel.setFirstName(generateRomanianFirstName());
-            productModel.setLastName(generateRomanianLastName());
-            productModel.setPhoneNr(generatePhoneNumberRO());
-            if (!productModel.getProductType().equals(CALL)){
-                productModel.setCallDuration(NO_DURATION);
-            } else {
-                productModel.setCallDuration(generateRandomCallDuration());
-            }
-            productModel.setEmailAddress(generateRandomEmailAddress(productModel.getFirstName(), productModel.getLastName()));
-            productModel.setCoordinates(generateRomaniaCoordinates());
-            productModel.setDirection(generateRandomDirection());
-            productModel.setParticipantModel(participantService.generateParticipant());
-            productModel.setTargetModel(new TargetModel());
-            productsRepo.save(productModel);
+    public void generateRandomTraffic() throws InterruptedException {
+        ProductModel productModel = new ProductModel();
+        productModel.setProductType(generateRandomProductType());
+        productModel.setFirstName(generateRomanianFirstName());
+        productModel.setLastName(generateRomanianLastName());
+        productModel.setPhoneNr(generatePhoneNumberRO());
+        if (!productModel.getProductType().equals(CALL)) {
+            productModel.setCallDuration(NO_DURATION);
+        } else {
+            productModel.setCallDuration(generateRandomCallDuration());
+        }
+        productModel.setEmailAddress(generateRandomEmailAddress(productModel.getFirstName(), productModel.getLastName()));
+        productModel.setCoordinates(generateRomaniaCoordinates());
+        productModel.setDirection(generateRandomDirection());
+        productModel.setParticipantModel(participantService.generateParticipant());
+        productModel.setTargetModel(new TargetModel());
+        Thread.sleep(1000);
+        productsRepo.save(productModel);
+        System.out.println("Processing count: " + productModel.getProductId());
 
     }
 
-    public void generateTraffic4SpecificTarget(Long id){
+    public void generateTraffic4SpecificTarget(Long id) {
         Optional<TargetModel> targetModelOptional = targetRepo.findById(id);
-        if (targetModelOptional.isEmpty()){
+        if (targetModelOptional.isEmpty()) {
             addProduct();
         } else {
             TargetModel targetModel = targetModelOptional.get();
@@ -271,8 +314,8 @@ public class ProductService {
         }
     }
 
-    public void initializeDatabaseForFirstDemo(){
-        for (int i = 0 ; i <= 10 ; i++) {
+    public void initializeDatabaseForFirstDemo() throws InterruptedException {
+        for (int i = 0; i <= 10; i++) {
             generateRandomTraffic();
         }
     }

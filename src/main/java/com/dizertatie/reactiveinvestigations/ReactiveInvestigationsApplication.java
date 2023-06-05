@@ -13,11 +13,5 @@ public class ReactiveInvestigationsApplication {
         SpringApplication.run(ReactiveInvestigationsApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner init(ProductService productService) {
-        return args -> {
-          productService.initializeDatabaseForFirstDemo();
-        };
-    }
 
 }

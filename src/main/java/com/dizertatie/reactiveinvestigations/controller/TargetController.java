@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 public class TargetController {
 
     @Autowired
@@ -40,7 +41,5 @@ public class TargetController {
     public void deleteTarget(@PathVariable Long id){
         targetService.removeTargetById(id);
     }
-
-    //TODO check unused methods from service
 
 }

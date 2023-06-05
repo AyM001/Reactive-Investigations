@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 public class ProductController {
 
     @Autowired
@@ -36,6 +37,11 @@ public class ProductController {
     @GetMapping("/productsById/{id}")
     public ProductModel retrieveProductById(@PathVariable Long id){
         return productService.findProductById(id);
+    }
+
+    @GetMapping("/generateReport/{productId}")
+    public void generateReport(@PathVariable Long productId){
+         productService.addReport(productId);
     }
 
     @GetMapping("/productsByTarget/{id}")
@@ -76,6 +82,11 @@ public class ProductController {
     @GetMapping("/allProducts")
     public List<ProductModel> getAll(){
         return productService.getAll();
+    }
+
+    @GetMapping("/generateRandomProducts")
+    public void generate() throws InterruptedException {
+         productService.initializeDatabaseForFirstDemo();
     }
 
     @PostMapping("/addProduct")
